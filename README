@@ -1,0 +1,17 @@
+Crypt::Elijah - A Perl5 encryption module 
+=========================================
+
+To install, the regular...
+
+    perl Makefile.PL
+    make
+    make install
+
+Then, for usage information...
+
+    perldoc Crypt::Elijah
+
+This module does not depend on other CPAN modules.
+
+You can get help from the author, Michael Bombardieri <bombardierix@gmail.com>.
+
