@@ -1,6 +1,12 @@
 Crypt::Elijah - A Perl5 encryption module 
 =========================================
 
+This module provides a simple API for symmetric data encryption using the 
+Elijah cipher. The cipher itself uses a 128-bit key and operates as a stream 
+cipher. You may emulate a block cipher (in ECB mode) by encrypting small chunks 
+of data at a time. When emulating a block cipher you need to handle block 
+cipher modes yourself; this module will not do CBC/CFB/OFB/CTR for you. 
+
 To install, the regular...
 
     perl Makefile.PL
@@ -14,5 +20,6 @@ Then, for usage information...
 
 This module does not depend on other CPAN modules.
 
-You can get help from the author, Michael Bombardieri <bombardierix@gmail.com>.
+You can get help from the author, Michael Bombardieri <bombardierix@gmail.com>. 
+Your comments, suggestions and patches are always welcome. Have fun!
 

@@ -4,117 +4,19 @@ use 5.006;
 use bytes;
 use Carp;
 
-our $VERSION = '0.07';
-
-sub _encrypt {
-    if (   !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) )
-    {
-        croak('Argument invalid');
-    }
-    my $len = length( $_[0] );
-    my @t   = unpack( 'C' . $len, $_[0] );
-    my $s   = $_[1];
-    my $pc  = $$s[359];
-    my $i;
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $t[$i] = ( $t[$i] + $pc ) % 256;
-        $t[$i] ^= $$s[ $i % 360 ];
-        $pc = ( $t[$i] + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-}
-
-sub _decrypt {
-    if (   !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) )
-    {
-        croak('Argument invalid');
-    }
-    my $len = length( $_[0] );
-    my @t   = unpack( 'C' . $len, $_[0] );
-    my $s   = $_[1];
-    my $pc  = $$s[359];
-    my ( $a, $i );
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $a = $t[$i];
-        $t[$i] ^= $$s[ $i % 360 ];
-        $t[$i] = ( $t[$i] - $pc ) % 256;
-        $pc = ( $a + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-}
-
-sub encrypt {
-    if (   !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) )
-    {
-        croak('Argument invalid');
-    }
-    my @x = ( 66, 70, 241, 196 );
-    $x[0] ^= int( rand(256) );
-    $x[1] ^= int( rand(256) );
-    $x[2] ^= int( rand(256) );
-    $x[3] ^= int( rand(256) );
-    $_[0] = pack( 'C4', @x ) . $_[0];
-    my $len = length( $_[0] );
-    my @t   = unpack( 'C' . $len, $_[0] );
-    my $s   = $_[1];
-    my $pc  = $$s[359];
-    my $i;
-
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $t[$i] = ( $t[$i] + $pc ) % 256;
-        $t[$i] ^= $$s[ $i % 360 ];
-        $pc = ( $t[$i] + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-}
-
-sub decrypt {
-    if (   !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) )
-    {
-        croak('Argument invalid');
-    }
-    my $len = length( $_[0] );
-    my @t   = unpack( 'C' . $len, $_[0] );
-    my $s   = $_[1];
-    my $pc  = $$s[359];
-    my ( $a, $i );
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $a = $t[$i];
-        $t[$i] ^= $$s[ $i % 360 ];
-        $t[$i] = ( $t[$i] - $pc ) % 256;
-        $pc = ( $a + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-    $_[0] = substr( $_[0], 4 );
-}
+our $VERSION = '0.08';
 
 sub set_key {
-    if ( !defined( $_[0] ) || ref( $_[0] ) || ( length( $_[0] ) < 12 ) ) {
-        croak('Argument invalid');
-    }
-    my @k      = ();
-    my @s      = ();
-    my $keylen = length( $_[0] );
-    my ( $a, $b, $c, $d, $e, $pc, $i );
-    if ( $keylen < 16 ) {
-        $a    = 16 - $keylen;
+    croak('Invalid arg')
+      if ( !defined( $_[0] ) || ref( $_[0] ) || ( length( $_[0] ) < 12 ) );
+    my ( @k, @s, $a, $b, $c, $d, $e, $i, $pc );
+    if ( length( $_[0] ) < 16 ) {
+        $a    = 16 - length( $_[0] );
         $b    = "\0" x $a;
         $_[0] = $b . $_[0];
     }
-    @k = unpack( 'C16', $_[0] );
     $pc = 21;
+    @k = unpack( 'C16', $_[0] );
     for ( $i = 360 ; $i > 0 ; $i-- ) {
         $a  = $i % 256;
         $b  = $a % 16;
@@ -125,6 +27,91 @@ sub set_key {
         push( @s, $e );
     }
     return \@s;
+}
+
+sub _encrypt {
+    croak('Invalid arg')
+      if ( !defined( $_[0] )
+        || !defined( $_[1] )
+        || ref( $_[0] )
+        || !ref( $_[1] ) );
+    my ( @t, $len, $s, $pc, $i );
+    $len = length( $_[0] );
+    @t   = unpack( 'C' . $len, $_[0] );
+    $s   = $_[1];
+    $pc  = $$s[359];
+    for ( $i = 0 ; $i < $len ; $i++ ) {
+        $t[$i] = ( $t[$i] + $pc ) % 256;
+        $t[$i] ^= $$s[ $i % 360 ];
+        $pc = ( $t[$i] + $i ) % 256;
+    }
+    $_[0] = pack( 'C' . $len, @t );
+}
+
+sub encrypt {
+    croak('Invalid arg')
+      if ( !defined( $_[0] )
+        || !defined( $_[1] )
+        || ref( $_[0] )
+        || !ref( $_[1] ) );
+    $_[0] = pack(
+        'N',
+        (
+            ( ( int( rand(0xFFFF) ) << 16 ) + int( rand(0xFFFF) ) ) ^ 0x19860719
+        )
+    ) . $_[0];
+    my ( @t, $len, $s, $pc, $i );
+    $len = length( $_[0] );
+    @t   = unpack( 'C' . $len, $_[0] );
+    $s   = $_[1];
+    $pc  = $$s[359];
+    for ( $i = 0 ; $i < $len ; $i++ ) {
+        $t[$i] = ( $t[$i] + $pc ) % 256;
+        $t[$i] ^= $$s[ $i % 360 ];
+        $pc = ( $t[$i] + $i ) % 256;
+    }
+    $_[0] = pack( 'C' . $len, @t );
+}
+
+sub _decrypt {
+    croak('Invalid arg')
+      if ( !defined( $_[0] )
+        || !defined( $_[1] )
+        || ref( $_[0] )
+        || !ref( $_[1] ) );
+    my ( @t, $len, $s, $pc, $i, $a );
+    $len = length( $_[0] );
+    @t   = unpack( 'C' . $len, $_[0] );
+    $s   = $_[1];
+    $pc  = $$s[359];
+    for ( $i = 0 ; $i < $len ; $i++ ) {
+        $a = $t[$i];
+        $t[$i] ^= $$s[ $i % 360 ];
+        $t[$i] = ( $t[$i] - $pc ) % 256;
+        $pc = ( $a + $i ) % 256;
+    }
+    $_[0] = pack( 'C' . $len, @t );
+}
+
+sub decrypt {
+    croak('Invalid arg')
+      if ( !defined( $_[0] )
+        || !defined( $_[1] )
+        || ref( $_[0] )
+        || !ref( $_[1] ) );
+    my ( @t, $len, $s, $pc, $i, $a );
+    $len = length( $_[0] );
+    @t   = unpack( 'C' . $len, $_[0] );
+    $s   = $_[1];
+    $pc  = $$s[359];
+    for ( $i = 0 ; $i < $len ; $i++ ) {
+        $a = $t[$i];
+        $t[$i] ^= $$s[ $i % 360 ];
+        $t[$i] = ( $t[$i] - $pc ) % 256;
+        $pc = ( $a + $i ) % 256;
+    }
+    $_[0] = pack( 'C' . $len, @t );
+    $_[0] = substr( $_[0], 4 );
 }
 
 1;
@@ -162,13 +149,14 @@ Salt is added to your data; ciphertext will always be larger than the correspond
 
 =head1 BUGS
 
+This module is not intended for bulk encryption.
+It would be more sensible to use an XS encryption module for processing large amounts of data.
+
 It is a good idea to remove redundancy from your data prior to encryption (e.g. using compression); this module has no built-in mechanism for achieving this.
 Redundancy in your data may allow information to be discovered from the ciphertext.
 
-This module is not intended for bulk encryption.  
-If you pass a large amount of data to encrypt() or decrypt(), it can take a really long time.
-
-This module is experimental software -- use at your own risk.
+This module is experimental software and should be used with caution.
+Please report any bugs to the author.
 
 =head1 AUTHOR
 
