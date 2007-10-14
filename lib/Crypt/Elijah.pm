@@ -1,13 +1,17 @@
-package Elijah;
+package Crypt::Elijah;
 
-use 5.006;
-use bytes;
 use Carp;
+use bytes;
+use vars qw($VERSION @ISA @EXPORT);
 
-our $VERSION = '0.08';
+require Exporter;
+@ISA    = qw(Exporter);
+@EXPORT = qw(el_key el_encrypt el_decrypt _el_encrypt _el_decrypt);
 
-sub set_key {
-    croak('Invalid arg')
+$VERSION = '0.09';
+
+sub el_key {
+    croak('Bad arg')
       if ( !defined( $_[0] ) || ref( $_[0] ) || ( length( $_[0] ) < 12 ) );
     my ( @k, @s, $a, $b, $c, $d, $e, $i, $pc );
     if ( length( $_[0] ) < 16 ) {
@@ -29,8 +33,8 @@ sub set_key {
     return \@s;
 }
 
-sub _encrypt {
-    croak('Invalid arg')
+sub _el_encrypt {
+    croak('Bad arg')
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
@@ -48,8 +52,8 @@ sub _encrypt {
     $_[0] = pack( 'C' . $len, @t );
 }
 
-sub encrypt {
-    croak('Invalid arg')
+sub el_encrypt {
+    croak('Bad arg')
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
@@ -73,8 +77,8 @@ sub encrypt {
     $_[0] = pack( 'C' . $len, @t );
 }
 
-sub _decrypt {
-    croak('Invalid arg')
+sub _el_decrypt {
+    croak('Bad arg')
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
@@ -93,8 +97,8 @@ sub _decrypt {
     $_[0] = pack( 'C' . $len, @t );
 }
 
-sub decrypt {
-    croak('Invalid arg')
+sub el_decrypt {
+    croak('Bad arg')
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
@@ -126,34 +130,39 @@ Crypt::Elijah - cipher module
 
     $text = 'secretive';
     $key = '0123456789abcdef'; 
-    $keyref = Elijah::set_key($key);
-    Elijah::encrypt($text, $keyref);
-    Elijah::decrypt($text, $keyref);
+    $keyref = el_key($key);
+    el_encrypt($text, $keyref);
+    el_decrypt($text, $keyref);
 
 =head1 DESCRIPTION
 
 This module provides a pure Perl implementation of the Elijah cipher.
-The module consists of the following functions: set_key(), encrypt(), and decrypt().
+The module exports the following functions: el_key(), el_encrypt() and 
+el_decrypt().
 
-Call set_key() to prepare the encryption key.
+Call el_key() to prepare the encryption key.
 This function takes a single argument: a packed string containing your key.
 The key must be at least 12 bytes long.
 Keys longer than 16 bytes are truncated.
 This function returns a reference to the prepared key.
 
-Call encrypt() and decrypt() to process your data.
+Call el_encrypt() and el_decrypt() to process your data.
 These functions take two arguments.
 The first argument is a string containing your data.
-The second argument is a reference returned by set_key().
-Salt is added to your data; ciphertext will always be larger than the corresponding plaintext.
+The second argument is a reference returned by el_key().
+Salt is added to your data; ciphertext will always be larger than the 
+corresponding plaintext.
 
 =head1 BUGS
 
 This module is not intended for bulk encryption.
-It would be more sensible to use an XS encryption module for processing large amounts of data.
+It would be more sensible to use an XS encryption module for processing large 
+amounts of data.
 
-It is a good idea to remove redundancy from your data prior to encryption (e.g. using compression); this module has no built-in mechanism for achieving this.
-Redundancy in your data may allow information to be discovered from the ciphertext.
+It is a good idea to remove redundancy from your data prior to encryption (e.g. 
+using compression); this module has no built-in mechanism for achieving this.
+Redundancy in your data may allow information to be discovered from the 
+ciphertext.
 
 This module is experimental software and should be used with caution.
 Please report any bugs to the author.
@@ -166,7 +175,8 @@ Michael W. Bombardieri <bombardierix@gmail.com>
 
 Copyright 2007 Michael W. Bombardieri.
 
-This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify it under 
+the same terms as Perl itself.
 
 =head1 DEDICATION
 

@@ -7,7 +7,7 @@ BEGIN {
 
 use Crypt::Elijah;
 
-print("# Using Crypt::Elijah version " . $Elijah::VERSION . "\n");
+print("# Using Crypt::Elijah version " . $Crypt::Elijah::VERSION . "\n");
 
 sub test_api {
 	my $key;
@@ -19,8 +19,8 @@ sub test_api {
 	my $ciphertext;
 	my $newciphertext;
 
-	print("# Elijah::set_key()\n");
-	$code = '$keyref = Elijah::set_key($key); 1;';
+	print("# el_key()\n");
+	$code = '$keyref = el_key($key); 1;';
 
 	print("# Testing normal key input (max. length)... ");
 	undef($keyref);
@@ -76,8 +76,8 @@ sub test_api {
 		return 0;
 	}
 
-	print("# Elijah::encrypt()\n");
-	$code = 'Elijah::encrypt($text, $keyref); 1;';
+	print("# el_encrypt()\n");
+	$code = 'el_encrypt($text, $keyref); 1;';
 
 	print("# Testing normal encryption... ");
 	undef($text);
@@ -131,8 +131,8 @@ sub test_api {
 	$keyref = $tmp;
 	$text = $ciphertext;
 
-	print("# Elijah::decrypt()\n");
-	$code = 'Elijah::decrypt($text, $keyref); 1;';
+	print("# el_decrypt()\n");
+	$code = 'el_decrypt($text, $keyref); 1;';
 
 	print("# Testing normal decryption... ");
 	if (eval($code) && ($text eq $plaintext)) {
@@ -144,8 +144,8 @@ sub test_api {
 
 	$text = $plaintext;
 
-	print("# Elijah::_encrypt()\n");
-	$code = 'Elijah::_encrypt($text, $keyref); 1;';
+	print("# _el_encrypt()\n");
+	$code = '_el_encrypt($text, $keyref); 1;';
 
 	print("# Testing base encryption... ");
 	if (eval($code)) {
@@ -155,8 +155,8 @@ sub test_api {
 	}	
 	$ciphertext = $text;
 
-	print("# Elijah::_decrypt()\n");
-	$code = 'Elijah::_decrypt($text, $keyref); 1;';
+	print("# _el_decrypt()\n");
+	$code = '_el_decrypt($text, $keyref); 1;';
 
 	print("# Testing base decryption... ");
 	if (eval($code) && ($text eq $plaintext)) {
@@ -194,8 +194,8 @@ sub test_cipher_vectors {
 	$Txt = pack('C16', @txt);
 	$Key = pack('C16', @key);
 	$Expected = pack('C16', @out);
-	$keyref = Elijah::set_key($Key);
-	Elijah::_encrypt($Txt, $keyref);
+	$keyref = el_key($Key);
+	_el_encrypt($Txt, $keyref);
 	if ($Txt ne $Expected) {
 		return 0;
 	}
@@ -215,8 +215,8 @@ sub test_cipher_vectors {
 	$Txt = pack('C16', @txt);
 	$Key = pack('C16', @key);
 	$Expected = pack('C16', @out);
-	$keyref = Elijah::set_key($Key);
-	Elijah::_encrypt($Txt, $keyref);
+	$keyref = el_key($Key);
+	_el_encrypt($Txt, $keyref);
 	if ($Txt ne $Expected) {
 		return 0;
 	}
@@ -236,8 +236,8 @@ sub test_cipher_vectors {
 	$Txt = pack('C16', @txt);
 	$Key = pack('C16', @key);
 	$Expected = pack('C16', @out);
-	$keyref = Elijah::set_key($Key);
-	Elijah::_encrypt($Txt, $keyref);
+	$keyref = el_key($Key);
+	_el_encrypt($Txt, $keyref);
 	if ($Txt ne $Expected) {
 		return 0;
 	}
@@ -257,8 +257,8 @@ sub test_cipher_vectors {
 	$Txt = pack('C16', @txt);
 	$Key = pack('C16', @key);
 	$Expected = pack('C16', @out);
-	$keyref = Elijah::set_key($Key);
-	Elijah::_encrypt($Txt, $keyref);
+	$keyref = el_key($Key);
+	_el_encrypt($Txt, $keyref);
 	if ($Txt ne $Expected) {
 		return 0;
 	}
@@ -278,8 +278,8 @@ sub test_cipher_vectors {
 	$Txt = pack('C16', @txt);
 	$Key = pack('C16', @key);
 	$Expected = pack('C16', @out);
-	$keyref = Elijah::set_key($Key);
-	Elijah::_encrypt($Txt, $keyref);
+	$keyref = el_key($Key);
+	_el_encrypt($Txt, $keyref);
 	if ($Txt ne $Expected) {
 		return 0;
 	}
