@@ -2,23 +2,23 @@ package Crypt::Elijah;
 
 use Carp;
 use bytes;
-use vars qw($VERSION @ISA @EXPORT);
-
 require Exporter;
-@ISA    = qw(Exporter);
-@EXPORT = qw(el_key el_encrypt el_decrypt _el_encrypt _el_decrypt);
 
-$VERSION = '0.09';
+our $VERSION = '0.10';
+our @ISA     = qw(Exporter);
+our @EXPORT  = qw(el_key el_encrypt el_decrypt);
 
 sub el_key {
-    croak('Bad arg')
+    croak()
       if ( !defined( $_[0] ) || ref( $_[0] ) || ( length( $_[0] ) < 12 ) );
     my ( @k, @s, $a, $b, $c, $d, $e, $i, $pc );
+
     if ( length( $_[0] ) < 16 ) {
         $a    = 16 - length( $_[0] );
         $b    = "\0" x $a;
         $_[0] = $b . $_[0];
     }
+
     $pc = 21;
     @k = unpack( 'C16', $_[0] );
     for ( $i = 360 ; $i > 0 ; $i-- ) {
@@ -33,89 +33,63 @@ sub el_key {
     return \@s;
 }
 
-sub _el_encrypt {
-    croak('Bad arg')
-      if ( !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) );
-    my ( @t, $len, $s, $pc, $i );
-    $len = length( $_[0] );
-    @t   = unpack( 'C' . $len, $_[0] );
-    $s   = $_[1];
-    $pc  = $$s[359];
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $t[$i] = ( $t[$i] + $pc ) % 256;
-        $t[$i] ^= $$s[ $i % 360 ];
-        $pc = ( $t[$i] + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-}
-
 sub el_encrypt {
-    croak('Bad arg')
+    croak()
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
         || !ref( $_[1] ) );
-    $_[0] = pack(
-        'N',
-        (
-            ( ( int( rand(0xFFFF) ) << 16 ) + int( rand(0xFFFF) ) ) ^ 0x19860719
-        )
-    ) . $_[0];
-    my ( @t, $len, $s, $pc, $i );
+    my ( @t, @salt, $len, $s, $pc, $i );
+
     $len = length( $_[0] );
     @t   = unpack( 'C' . $len, $_[0] );
     $s   = $_[1];
     $pc  = $$s[359];
+
+    $len += 4;
+    @salt = unpack(
+        'C4',
+        pack(
+            'N',
+            (
+                ( ( int( rand(0xFFFF) ) << 16 ) + int( rand(0xFFFF) ) )
+                ^ 0x19860719
+            )
+        )
+    );
+    unshift( @t, @salt );
+
     for ( $i = 0 ; $i < $len ; $i++ ) {
         $t[$i] = ( $t[$i] + $pc ) % 256;
         $t[$i] ^= $$s[ $i % 360 ];
         $pc = ( $t[$i] + $i ) % 256;
-    }
-    $_[0] = pack( 'C' . $len, @t );
-}
-
-sub _el_decrypt {
-    croak('Bad arg')
-      if ( !defined( $_[0] )
-        || !defined( $_[1] )
-        || ref( $_[0] )
-        || !ref( $_[1] ) );
-    my ( @t, $len, $s, $pc, $i, $a );
-    $len = length( $_[0] );
-    @t   = unpack( 'C' . $len, $_[0] );
-    $s   = $_[1];
-    $pc  = $$s[359];
-    for ( $i = 0 ; $i < $len ; $i++ ) {
-        $a = $t[$i];
-        $t[$i] ^= $$s[ $i % 360 ];
-        $t[$i] = ( $t[$i] - $pc ) % 256;
-        $pc = ( $a + $i ) % 256;
     }
     $_[0] = pack( 'C' . $len, @t );
 }
 
 sub el_decrypt {
-    croak('Bad arg')
+    croak()
       if ( !defined( $_[0] )
         || !defined( $_[1] )
         || ref( $_[0] )
         || !ref( $_[1] ) );
     my ( @t, $len, $s, $pc, $i, $a );
+
     $len = length( $_[0] );
     @t   = unpack( 'C' . $len, $_[0] );
     $s   = $_[1];
     $pc  = $$s[359];
+
     for ( $i = 0 ; $i < $len ; $i++ ) {
         $a = $t[$i];
         $t[$i] ^= $$s[ $i % 360 ];
         $t[$i] = ( $t[$i] - $pc ) % 256;
         $pc = ( $a + $i ) % 256;
     }
+
+    $len -= 4;
+    splice( @t, 0, 4 );
     $_[0] = pack( 'C' . $len, @t );
-    $_[0] = substr( $_[0], 4 );
 }
 
 1;
