@@ -19,8 +19,7 @@ sub test_api {
 	my $ciphertext;
 	my $newciphertext;
 
-	print("# el_key()\n");
-	$code = '$keyref = el_key($key); 1;';
+	$code = '$keyref = Crypt::Elijah::init($key); 1;';
 
 	print('# Testing normal key input (max. length)... ');
 	undef($keyref);
@@ -76,8 +75,7 @@ sub test_api {
 		return 0;
 	}
 
-	print("# el_encrypt()\n");
-	$code = 'el_encrypt($text, $keyref); 1;';
+	$code = 'Crypt::Elijah::enc($text, $keyref); 1;';
 
 	print('# Testing normal encryption... ');
 	undef($text);
@@ -131,8 +129,7 @@ sub test_api {
 	$keyref = $tmp;
 	$text = $ciphertext;
 
-	print("# el_decrypt()\n");
-	$code = 'el_decrypt($text, $keyref); 1;';
+	$code = 'Crypt::Elijah::dec($text, $keyref); 1;';
 
 	print('# Testing normal decryption... ');
 	if (eval($code) && ($text eq $plaintext)) {
@@ -147,9 +144,9 @@ sub test_api {
 	$code = 'no strict;'
 		. '$t = \'secret\';'
 		. '$k = \'0123456789abcdef\';'
-		. '$K = el_key($k);'
-		. 'el_encrypt($t, $K);'
-		. 'el_decrypt($t, $K);';
+		. '$K = Crypt::Elijah::init($k);'
+		. 'Crypt::Elijah::enc($t, $K);'
+		. 'Crypt::Elijah::dec($t, $K);';
 	if (eval($code)) {
 		print("Done\n");
 	} else {
@@ -160,42 +157,40 @@ sub test_api {
 	return 1;
 }
 
-sub test_cipher_operation {
+sub test_cipher_operation { # no test vectors
 	my $key;
+	my $plaintext;
 	my $keyref;
 	my $ciphertext;
-	my $expected;
+	my $data;
 
 	my @keys = (
-		'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
-		'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 
-		'0123456789ABCDEF0123456789ABCDEF',
-		'000000000000DEADBEEF000000000000',
-		'F01FF23FF45FF67FF89FFABFFCDFFEFF'
+		'ffffffffffffffffffffffffffffffff',
+		'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 
+		'0123456789abcdef0123456789abcdef',
+		'000000000000deadbeef000000000000',
+		'f01ff23ff45ff67ff89ffabffcdffeff'
 	);
 	my @plaintexts = (
-		'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 
-		'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
-		'AABBCCDDEEFF00112233445566778899',
+		'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 
+		'ffffffffffffffffffffffffffffffff',
+		'aabbccddeeff00112233445566778899',
 		'01010101010101010101010101010101',
 		'00000000000000000000000000000000'
 	);
 
 	print('# Checking cipher operation... ');
-
 	while ($key = shift(@keys)) {
-		$ciphertext = shift(@plaintexts);
+		$key = pack('H32', $key);
+		$plaintext = shift(@plaintexts); 
+		$data = pack('H32', $plaintext);
 
-		$key = pack('H32', $key); # note 32 nibbles long
-		$expected = pack('H32', $expected);
-		$ciphertext = pack('H32', $ciphertext);
-		$expected = $ciphertext;
-
-		$keyref = el_key($key);
-		el_encrypt($ciphertext, $keyref);
-		el_decrypt($ciphertext, $keyref);
-
-		if ($ciphertext ne $expected) {
+		$keyref = Crypt::Elijah::init($key);
+		Crypt::Elijah::enc($data, $keyref);
+		Crypt::Elijah::dec($data, $keyref);
+		
+		$data = unpack('H32', $data);
+		if ($data ne $plaintext) {
 			return 0;
 		}
 	}
@@ -203,6 +198,7 @@ sub test_cipher_operation {
 	print("Done\n");
 	return 1;
 }
+
 
 ok(test_api());
 ok(test_cipher_operation());
